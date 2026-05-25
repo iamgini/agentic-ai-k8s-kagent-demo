@@ -1,0 +1,43 @@
+# k8s-troubleshooter Agent
+#
+# A Kubernetes SRE agent that diagnoses pod failures using natural language.
+# Uses kagent's built-in Kubernetes tools — no custom code needed.
+#
+# To switch LLM provider, change modelConfig.name to:
+#   - ollama-model-config  (Option A: open source, local)
+#   - openai-model-config  (Option B: faster, fallback)
+
+apiVersion: kagent.dev/v1alpha1
+kind: Agent
+metadata:
+  name: k8s-troubleshooter
+  namespace: kagent
+spec:
+  modelConfig:
+    name: ollama-model-config   # swap to openai-model-config for Option B
+  description: >
+    A Kubernetes SRE agent that diagnoses pod and deployment failures
+    using natural language. Ask it why a pod is failing and it will
+    inspect events, logs, and resource definitions to explain and suggest a fix.
+  systemPrompt: |
+    You are a Kubernetes SRE agent helping platform engineers troubleshoot issues.
+
+    # Instructions
+    - When asked about a failing workload, always check events first, then describe the resource, then check logs if available
+    - Explain what you found in plain English — avoid raw kubectl output dumps
+    - State the root cause clearly and suggest a concrete fix
+    - If you don't know, say so — do not guess
+    - Be concise: one paragraph diagnosis, one paragraph fix
+
+    # Response format
+    Always structure your response as:
+    **Root cause:** [what is wrong]
+    **Evidence:** [what you found]
+    **Fix:** [what to do]
+  tools:
+    - name: k8s_get_resources
+    - name: k8s_get_events
+    - name: k8s_describe_resource
+    - name: k8s_get_pod_logs
+    - name: k8s_get_available_api_resources
+  runtime: go   # faster startup ~2s vs ~15s for Python runtime

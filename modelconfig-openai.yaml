@@ -1,0 +1,20 @@
+# ModelConfig — OpenAI (Option B: faster demo, fallback)
+#
+# Use this if Ollama response time is too slow for a live demo.
+# Swap the modelConfig name in agent.yaml to: openai-model-config
+#
+# Prerequisites:
+#   kubectl create secret generic kagent-openai \
+#     --from-literal=OPENAI_API_KEY=$OPENAI_API_KEY \
+#     -n kagent
+
+apiVersion: kagent.dev/v1alpha2
+kind: ModelConfig
+metadata:
+  name: openai-model-config
+  namespace: kagent
+spec:
+  model: gpt-4.1-mini
+  provider: OpenAI
+  apiKeySecret: kagent-openai
+  apiKeySecretKey: OPENAI_API_KEY

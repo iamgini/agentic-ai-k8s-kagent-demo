@@ -1,0 +1,46 @@
+# broken-app — intentionally broken deployment for demo
+#
+# Failure scenario: bad container image tag → ImagePullBackOff
+# This is the most common real-world pod failure and easiest to diagnose.
+#
+# The agent will:
+#   1. List pods and spot the ImagePullBackOff
+#   2. Describe the pod and find the bad image name
+#   3. Check events and see the pull error
+#   4. Report root cause + suggest correcting the image tag
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-app
+  namespace: default
+  labels:
+    app: broken-app
+    demo: kagent-cncf-singapore
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: broken-app
+  template:
+    metadata:
+      labels:
+        app: broken-app
+    spec:
+      containers:
+        - name: web
+          image: nginx:totally-does-not-exist   # bad tag → ImagePullBackOff
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broken-app
+  namespace: default
+spec:
+  selector:
+    app: broken-app
+  ports:
+    - port: 80
+      targetPort: 80

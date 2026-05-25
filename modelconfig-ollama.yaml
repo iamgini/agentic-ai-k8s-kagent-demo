@@ -1,0 +1,18 @@
+# ModelConfig — Ollama inside the cluster
+# Option A: 100% open source, no paid API
+#
+# Uses the official Ollama provider support in kagent
+# Ref: https://kagent.dev/docs/kagent/supported-providers/ollama
+#
+# Change model to qwen2.5 or llama3.2:3b if you need faster CPU responses
+
+apiVersion: kagent.dev/v1alpha2
+kind: ModelConfig
+metadata:
+  name: ollama-model-config
+  namespace: kagent
+spec:
+  model: llama3.1
+  provider: Ollama
+  ollama:
+    host: http://ollama.ollama.svc.cluster.local

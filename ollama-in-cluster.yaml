@@ -1,0 +1,60 @@
+# Ollama running inside the kind cluster (CPU-only, no GPU needed)
+# Model is pulled at setup time — no internet required on demo day
+#
+# NOTE: llama3.1 is ~4.7GB. Pull it once during setup, not on stage.
+# For faster responses consider: qwen2.5:7b or llama3.2:3b
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ollama
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ollama
+spec:
+  selector:
+    matchLabels:
+      name: ollama
+  template:
+    metadata:
+      labels:
+        name: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports:
+            - name: http
+              containerPort: 11434
+              protocol: TCP
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "2"
+            limits:
+              memory: "8Gi"
+              cpu: "4"
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: ollama
+spec:
+  type: ClusterIP
+  selector:
+    name: ollama
+  ports:
+    - port: 80
+      name: http
+      targetPort: http
+      protocol: TCP
