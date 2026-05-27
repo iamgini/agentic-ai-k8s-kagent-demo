@@ -168,3 +168,72 @@ Point audience to:
 - github.com/iamgini/agentic-ai-k8s-kagent-demo  ← this repo
 - kagent.dev/docs/kagent/getting-started/quickstart
 - discord.gg/Fu3k65f2k3  ← kagent community Discord
+
+---
+
+## BONUS SCENARIO — CrashLoopBackOff (optional, if time allows)
+
+**Setup (do this before the talk, alongside broken-app):**
+```bash
+kubectl apply -f crash-app.yaml
+kubectl get pods -n default   # should show CrashLoopBackOff after ~30s
+```
+
+---
+
+### BEAT 1 — Show both failures
+
+Say:
+> "Let's look at another common failure — this one's even more frustrating
+> because the image pulls fine but the container keeps dying."
+
+Type:
+```bash
+kubectl get pods -n default
+```
+
+Expected output shows both:
+```
+broken-app-xxxx   0/1   ImagePullBackOff   0   2m
+crash-app-xxxx    0/1   CrashLoopBackOff   3   90s
+```
+
+Say:
+> "CrashLoopBackOff. The image pulled fine, Kubernetes started the container,
+> but something inside is failing and it keeps restarting. Let's ask the agent."
+
+---
+
+### BEAT 2 — Ask the agent
+
+Switch to browser. Click on k8s-troubleshooter agent. Start a new chat.
+
+Type in the chat box:
+> "Why is crash-app failing in the default namespace?"
+
+This time the agent will use `k8s_get_pod_logs` — point that out:
+
+Say:
+> "Notice the agent is now reading the actual container logs — something
+> you'd normally do with kubectl logs. It found our error message:
+> 'Database connection failed'. Root cause identified."
+
+Expected agent response:
+> **Root cause:** The container is exiting immediately with exit code 1 due to an application error.
+> **Evidence:** Pod logs show `ERROR: Database connection failed`. The container command exits after printing the error.
+> **Fix:** Fix the database connection configuration or environment variables for the application.
+
+---
+
+### BEAT 3 — Close the loop
+
+Say:
+> "Two completely different failure modes — ImagePullBackOff and CrashLoopBackOff.
+> Same agent. Same interface. Just natural language.
+> That's what it means to run AI agents the cloud native way."
+
+**Cleanup after demo:**
+```bash
+kubectl delete -f crash-app.yaml
+kubectl delete -f broken-app.yaml
+```

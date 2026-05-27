@@ -1,7 +1,6 @@
 # broken-app — intentionally broken deployment for demo
 #
 # Failure scenario: bad container image tag → ImagePullBackOff
-# This is the most common real-world pod failure and easiest to diagnose.
 #
 # The agent will:
 #   1. List pods and spot the ImagePullBackOff

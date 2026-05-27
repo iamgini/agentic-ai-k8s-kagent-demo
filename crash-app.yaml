@@ -1,0 +1,23 @@
+# crash-app — CrashLoopBackOff demo scenario
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crash-app
+  namespace: default
+  labels:
+    app: crash-app
+    demo: kagent-cncf-singapore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crash-app
+  template:
+    metadata:
+      labels:
+        app: crash-app
+    spec:
+      containers:
+        - name: app
+          image: nginx:latest
+          command: ["sh", "-c", "echo 'Starting app...' && echo 'ERROR: Database connection failed' && exit 1"]

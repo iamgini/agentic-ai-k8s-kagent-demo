@@ -1,5 +1,5 @@
 # ModelConfig — Ollama inside the cluster
-# Option A: 100% open source, no paid API
+# 100% open source, no paid API
 #
 # Uses the official Ollama provider support in kagent
 # Ref: https://kagent.dev/docs/kagent/supported-providers/ollama
