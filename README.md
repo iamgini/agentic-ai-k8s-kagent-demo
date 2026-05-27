@@ -35,26 +35,78 @@ kagent-demo/
 ## Prerequisites
 
 ```bash
-brew install kind helm kubectl
-brew install kagent
+# kind
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+# helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/kubectl
+
+# kagent CLI
+curl https://raw.githubusercontent.com/kagent-dev/kagent/refs/heads/main/scripts/get-kagent | bash
 ```
 
-For **Option A (Ollama — 100% open source):**
-```bash
-brew install ollama
+
+## Setup Ollama 
+
+(on another machine for demo)
+
+```shell
+# 1. Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# 2. Start Ollama listening on all interfaces (not just localhost)
+OLLAMA_HOST=0.0.0.0:11434 ollama serve &
+
+# or edit the systemd
+sudo systemctl edit ollama
+
+# Add override 
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+
+# verify it's now listening on all interfaces
+ss -tlnp | grep 11434
+
 ```
 
-For **Option B (OpenAI — faster, fallback):**
-```bash
-export OPENAI_API_KEY="your-key-here"
+```shell
+# 3. Pull the model (do this before talk day — takes a few minutes)
+ollama pull qwen2.5:32b
+
+# 4. Quick test
+curl http://localhost:11434/api/generate -d '{
+  "model": "qwen2.5:32b",
+  "prompt": "Why would a Kubernetes pod be in ImagePullBackOff?",
+  "stream": false
+}'
 ```
 
-## Setup (run once before the talk)
+## Setup
+
+```shell
+kubectl create secret generic kagent-openai \
+  --from-literal=OPENAI_API_KEY=<your-key> \
+  -n kagent
+```  
 
 ### 1. Create the kind cluster
 ```bash
 kind create cluster --name kagent-demo --config kind-cluster.yaml
 kubectl cluster-info --context kind-kagent-demo
+```
+
+```shell
+export OPENAI_API_KEY=<your-key>
 ```
 
 ### 2. Install kagent
@@ -63,19 +115,8 @@ kagent install --profile demo
 kubectl get pods -n kagent   # wait until all pods are Running
 ```
 
-### 3a. Option A — Deploy Ollama inside the cluster (recommended)
-```bash
-kubectl apply -f ollama-in-cluster.yaml
-kubectl rollout status deployment/ollama -n ollama
 
-# Pull the model into the running pod
-kubectl exec -n ollama deploy/ollama -- ollama pull llama3.1
-
-# Apply the Ollama ModelConfig
-kubectl apply -f modelconfig-ollama.yaml
-```
-
-### 3b. Option B — Use OpenAI (faster, fallback)
+### 3. Use OpenAI (faster, fallback)
 ```bash
 kubectl apply -f modelconfig-openai.yaml
 ```
