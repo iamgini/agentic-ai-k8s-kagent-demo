@@ -12,8 +12,9 @@
 - [ ] kind cluster is running: `kubectl cluster-info --context kind-kagent-demo`
 - [ ] kagent pods are Running: `kubectl get pods -n kagent`
 - [ ] broken-app is deployed and showing ImagePullBackOff: `kubectl get pods -n default`
-- [ ] kagent dashboard is open: `kagent dashboard` → http://localhost:8082
+- [ ] kagent dashboard is open: `kubectl port-forward -n kagent service/kagent-ui 8082:8080`
 - [ ] Browser tab with dashboard is open and showing k8s-troubleshooter agent
+- [ ] OpenAI model warmed up — send one test message before going on stage
 - [ ] Font size on terminal is large (min 18pt) — audience at the back can't read small text
 - [ ] Zoom in on browser (Cmd + to 125%)
 - [ ] Disable notifications (Do Not Disturb on)
@@ -69,6 +70,18 @@ Say:
 
 ---
 
+### BEAT 2.5 — Talk about model flexibility (20 seconds, no typing needed)
+
+Say:
+> "One thing worth noting — kagent is model-agnostic. You can plug in any
+> LLM provider: local Ollama on your laptop, a GPU instance running Llama or
+> Qwen, or an enterprise model like OpenAI or Anthropic. You change one field
+> in a YAML file — the ModelConfig — and the agent switches providers.
+> For today's demo I'm using OpenAI for reliability, but the same agent
+> runs identically on a fully open source stack."
+
+---
+
 ### BEAT 3 — Ask the agent (3 minutes, browser dashboard)
 
 Switch to browser. Click on k8s-troubleshooter agent.
@@ -86,19 +99,17 @@ Point out the tool calls expanding in the UI as they complete.
 Expected agent response structure:
 > **Root cause:** The pod is failing because the container image `nginx:totally-does-not-exist` does not exist in the registry.
 > **Evidence:** Events show `Failed to pull image: not found`. The pod spec specifies an invalid image tag.
-> **Fix:** Update the deployment to use a valid image tag such as `nginx:latest` or `nginx:1.25`.
+> **Fix:** Update the deployment to use a valid image tag such as `nginx:latest`.
 
 Say:
-> "Root cause, evidence, fix. In plain English. No kubectl gymnastics.
-> And this ran entirely on open source — kagent, Ollama, Llama 3.1,
-> all inside a Kubernetes cluster."
+> "Root cause, evidence, fix. In plain English. No kubectl gymnastics."
 
 ---
 
-### BEAT 4 — Close the loop (30 seconds, terminal)
+### BEAT 4 — Apply the fix (30 seconds, terminal)
 
 Say:
-> "Let me apply the fix the agent suggested."
+> "The agent diagnosed the problem. Now let me apply the fix it suggested."
 
 Type:
 ```bash
@@ -111,7 +122,7 @@ Pods go Running.
 
 Say:
 > "That's it. A Kubernetes-native AI agent, defined as a CRD,
-> using built-in tools, powered by open source.
+> using built-in tools, connected to any LLM you choose.
 > No proprietary platform, no vendor lock-in.
 > Just Kubernetes doing what Kubernetes does — but now with agents."
 
@@ -119,20 +130,29 @@ Say:
 
 ## FALLBACK PLAN (if something breaks on stage)
 
-**If kagent dashboard won't load:**
-Use the CLI instead:
+**If kagent dashboard won't load (502 error):**
+Check the port-forward is running:
+```bash
+kubectl port-forward -n kagent service/kagent-ui 8082:8080
+```
+Or use the CLI instead:
 ```bash
 kagent invoke -t "Why is the broken-app pod failing?" --agent k8s-troubleshooter -n kagent
 ```
 
-**If the agent hangs or times out:**
-Say: "Ollama is thinking — this is the CPU penalty I mentioned.
-On a GPU instance this takes 2 seconds."
-Then switch to the OpenAI fallback:
+**If OpenAI returns model_not_found error:**
+Switch model to gpt-4o-mini:
 ```bash
-kubectl patch agent k8s-troubleshooter -n kagent \
+kubectl patch modelconfig openai-model-config -n kagent \
   --type='json' \
-  -p='[{"op":"replace","path":"/spec/modelConfig/name","value":"openai-model-config"}]'
+  -p='[{"op":"replace","path":"/spec/model","value":"gpt-4o-mini"}]'
+```
+
+**If agent shows Accepted: False:**
+Check the modelconfig secret exists:
+```bash
+kubectl get secret kagent-openai -n kagent
+kubectl get modelconfig openai-model-config -n kagent -o yaml
 ```
 
 **If kind cluster is dead:**
@@ -145,6 +165,6 @@ Say: "Demo gods were not with me today — but here's what it looks like."
 ## AFTER THE TALK
 
 Point audience to:
-- github.com/iamgini/kagent-demo  ← this repo
+- github.com/iamgini/agentic-ai-k8s-kagent-demo  ← this repo
 - kagent.dev/docs/kagent/getting-started/quickstart
 - discord.gg/Fu3k65f2k3  ← kagent community Discord
