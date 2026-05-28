@@ -260,3 +260,5 @@ shell
 - kagent GitHub: https://github.com/kagent-dev/kagent
 - CNCF project page: https://www.cncf.io/projects/kagent/
 - Supported LLM providers: https://kagent.dev/docs/kagent/supported-providers
+
+https://agentgateway.dev/
